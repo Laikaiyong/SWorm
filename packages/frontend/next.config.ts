@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
   distDir: "dist",
   reactStrictMode: true,
   transpilePackages: [
@@ -16,6 +15,19 @@ const nextConfig: NextConfig = {
   webpack: (config) => {
     config.externals = [...(config.externals || []), "encoding"];
     return config;
+  },
+  images: {
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
+      },
+    ],
   },
 };
 

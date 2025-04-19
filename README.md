@@ -1,134 +1,124 @@
-# Sui dApp Starter - Easy-to-Use Full-Stack Sui Starter
-[![Build and Lint (frontend)](https://github.com/suiware/sui-dapp-starter/actions/workflows/build_and_lint.yaml/badge.svg)](https://github.com/suiware/sui-dapp-starter/actions/workflows/build_and_lint.yaml)
-[![Discord chat](https://img.shields.io/discord/1237259509366521866.svg?logo=discord&style=flat-square)](https://discord.com/invite/HuDPpXz4Hx)
+# SWorm: Cross-Chain DeFi Yield Optimizer
 
-![Spoiler](https://repository-images.githubusercontent.com/794883099/f0937c6b-c021-41db-b44a-a287b29111c3)
+SWorm is a smart DeFi platform that simplifies yield farming across multiple blockchains with an intuitive, gamified experience powered by AI.
 
-[Won the 1st place in the Randomness category of the Sui Overflow 2024 hackathon](https://blog.sui.io/2024-sui-overflow-hackathon-winners/)
+## ❗ Problem Statement
 
-## Motivation
+- Yield farming in DeFi is **complex and fragmented**, often requiring multiple tools and platforms.
+- Users must **manually bridge assets** across blockchains, increasing friction and gas costs.
+- Choosing the right pools or strategies requires **deep research** and constant monitoring.
+- New users face a **steep learning curve**, while even advanced users risk inefficient capital deployment.
+- There is a lack of **personalized automation** and real-time optimization across chains.
+- Existing platforms lack **gamification or guided experiences**, making DeFi feel overwhelming and inaccessible.
 
-Most of the Sui starters I found were either very basic or one-sided (frontend or backend). Thanks to my experience with various full-stack starters and templates, I knew how to do better, so I started this template with the goal of providing all basic tools and components for you to focus on your business logic from day one and not spend weeks on creating your app skeleton. // [@kkomelin](https://github.com/kkomelin)
+**SWorm** addresses these challenges by providing:
 
-## Features
+- A **cross-chain yield optimizer** that automates farming via Wormhole
+- **AI-driven strategy recommendations** based on risk and performance
+- A **gamified interface** that turns DeFi into an engaging, rewarding journey
 
-- **[Suibase](https://suibase.io/)**: Painless work with the networks and system dependencies
-- **[Local Sui Explorer](https://github.com/suiware/sui-explorer)**: Browse your transactions and objects locally
-- **pnpm**: More efficient package management for monorepos
-- **TypeScript**: Less error-prone JavaScript
-- **React or Next.js**: Choose a template with a framework of your choice
-- **Tailwind CSS**: Utility-first CSS for more efficient styling
-- **Vite + SWC**: Faster app bundling and optimizing
-- **Radix UI**: Accessible React components to prototype quicker 
-- **Sui dApp Kit**: All you need to work with Sui network on frontend
-- **[@suiware/kit](https://www.npmjs.com/package/@suiware/kit)**: Useful react primitives, such as useTransact, useNetworkType, NetworkType, useBalance, Balance, useFaucet, Faucet and more
-- **Frontend Deployment**: [Firebase](https://sui-dapp-starter.dev/docs/frontend/deployment/firebase), [Walrus Sites](https://sui-dapp-starter.dev/docs/frontend/deployment/walrus), [Arweave](https://sui-dapp-starter.dev/docs/frontend/deployment/arweave)
-- **One-liner Install**: Just `pnpm create sui-dapp@latest`
-- **[Demo app](https://demo.sui-dapp-starter.dev/)**: Default Greeting (React) template
+## 🌟 Key Features
 
-## Prerequisites
+### Cross-Chain Integration
 
-Before you begin, install the following:
+- Seamless onboarding from any blockchain through Wormhole
+- Bridge assets effortlessly between supported networks
 
-- [Suibase](https://suibase.io/how-to/install.html)
-- [Node (>= 20)](https://nodejs.org/en/download/)
-- [pnpm (>= 9)](https://pnpm.io/installation)
+### Smart Yield Farming Strategies
 
-## Installation
+Choose your investment style:
 
-### Option 1. Use the Github template
+- 🛡️ **Shield Strategy** - Low-risk, stable returns (stablecoin staking)
+- ⚔️ **Sword Strategy** - High-risk, high-reward opportunities (memecoin pools + leverage)
+- ⚔️🛡️ **Balanced Strategy** - Optimal mix of staking and stable pools
+- 🔫 **Gun Mode** - AI-validated aggressive strategy for maximum yield (expert-level risk)
 
-1. [Create a new project from the template](https://github.com/new?template_name=sui-dapp-starter&template_owner=suiware&name=my-sui-dapp).
+### AI Adventure Buddy
 
-2. Clone the resulting repo locally.
+- Real-time position monitoring with intelligent notifications
+- Risk assessment based on APY, TVL, and market conditions
+- Smart recommendations for yield optimization
 
-3. Choose a template by running the corresponding init command:
+### Gamified Experience
 
-| Template | Init command |
-| --- | --- |
-| Greeting (React) | `pnpm init:template:greeting-react` |
-| Greeting (Next.js) | `pnpm init:template:greeting-next` |
-| Counter (React) | `pnpm init:template:counter-react` |
+- Complete quests to earn rewards and NFT badges
+- Temporary APY boosts for completing challenges
+- Progress tracking and achievement system
 
-[Template Guide](https://sui-dapp-starter.dev/docs/templates)
+### Advanced Analytics
 
-### Option 2. Use CLI
+- GraphQL-powered insights on pool volumes and performance
+- Historical yield data visualization
+- Risk-adjusted return comparisons
 
-```bash
-pnpm create sui-dapp@latest
-```
+## 👷‍♀️ Solution Architecture
 
-This way you'll be able to configure the project step-by-step.
+![SWorm Development Architecture](./docs/assets/architecture.png)
 
-## Usage
+## 🚀 Getting Started
 
-#### 1. Run the local Sui network:
+### Prerequisites
 
-```bash
-pnpm localnet:start
-```
+- Node.js v18+
+- Yarn or npm
 
-Local Sui Explorer will be available on [localhost:9001](http://localhost:9001/)
-
-#### 2. Deploy the demo contract to the local network:
+### Frontend Setup
 
 ```bash
-pnpm localnet:deploy
+cd frontend
+npm install
+npm run dev
 ```
 
-_This command skips dependency verifications to prevent dependency version mismatch issues, which are caused by local and remote Sui version mismatch. The deploy commands for devnet, testnet and mainnet do perform such verifications._
+The app will be available at http://localhost:3000
 
-#### 3. Switch to the local network in your browser wallet settings.
-
-#### 4. Fund your localnet account/address:
-
-You have a few options here:
-
-a) Use the Faucet button integrated into your wallet (e.g. Sui Wallet).
-
-b) Copy the localnet address from your wallet and run the following in your console:
+### Contract Setup
 
 ```bash
-pnpm localnet:faucet 0xYOURADDRESS
+cd contract
+# Setup instructions will be added soon
 ```
 
-c) Run the app and use the Faucet button in the footer.
+## 📊 Business Model
 
-#### 5. Run the app:
+SWorm operates on a freemium model:
 
-```bash
-pnpm start
-```
-Find all commands in the [documentation](https://sui-dapp-starter.dev/docs/misc/commands/).
+**Free Tier:**
 
-## Test
+- Basic yield farming strategies
+- Limited cross-chain actions
+- Core analytics
 
-#### Backend
+**Pro Subscription:**
 
-```bash
-pnpm test
-```
+- Sponsored transactions (gas covered)
+- Advanced AI features and recommendations
+- +0.3% APY boost on qualifying pools
+- Priority support
 
-## Docs & Support
+All transactions include a small service fee to support platform development.
 
-- [Sui dApp Starter Docs](https://sui-dapp-starter.dev/docs)
-- [Available PNPM Commands](https://sui-dapp-starter.dev/docs/misc/commands/)
-- [@suiware/kit Docs](https://www.npmjs.com/package/@suiware/kit)
-- [Discord Support](https://discord.com/invite/HuDPpXz4Hx)  
+## 🔧 Tech Stack
 
-## Useful Links
+- **Frontend:** Next.js, React, TailwindCSS
+- **Smart Contracts:** Move
+- **Cross-Chain:** Wormhole Protocol
+- **Data & Analytics:** GraphQL, CoinGecko, GeckoTerminal
+- **AI:** Deepseek AI
 
-- [Useful VSCode Extensions](./.vscode/extensions.json)
-- [Suibase Docs](https://suibase.io/intro.html)
-- [Move Book](https://move-book.com/)
-- [Sui Move: Code Conventions](https://docs.sui.io/concepts/sui-move-concepts/conventions)
-- [@mysten/create-dapp - official starter](https://www.npmjs.com/package/@mysten/create-dapp)
-- [Awesome Sui](https://github.com/sui-foundation/awesome-sui)
+## 🛣️ Roadmap (Using Phases instead of Time)
 
-## License & Copyright
+- **Phase 1:** Beta launch with core features @ SUI HackerHouse
+- **Phase 2:** Advanced analytics and AI recommendations ( Provide More insights for the Users )
+- **Phase 3:** Mobile app and expanded chain support ( For Good UX and Further Reach )
+- **Phase 4:** DAO governance ( Let the Community Decide the direction )
+- **Phase 5:** Token launch ( TGE! )
 
-Copyright (c) 2024 Konstantin Komelin and other contributors
+![SWorm Development Roadmap](./docs/assets/roadmap.png)
 
-Code is licensed under [MIT](https://github.com/suiware/sui-dapp-starter?tab=MIT-1-ov-file)
+*Our phased approach to building a comprehensive cross-chain DeFi yield optimizer*
 
-SVG Graphics used for NFTs is licensed under [CC-BY 4.0](https://github.com/suiware/sui-dapp-starter?tab=CC-BY-4.0-2-ov-file)
+## Deployed Contract
+
+- **Contract Address:** 0x053cb94ecf6b1ef428ece53b82a3de900330b7fe11a96c6518b5f938a6c772e6
+- **Explorer:** [Sui Explorer](https://suiscan.xyz/testnet/object/0x053cb94ecf6b1ef428ece53b82a3de900330b7fe11a96c6518b5f938a6c772e6/contracts)
