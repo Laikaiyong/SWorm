@@ -53,7 +53,7 @@ Choose your investment style:
 
 ## 👷‍♀️ Solution Architecture
 
-![SWorm Development Architecture](./docs/assets/architecture.png)
+![SWorm Development Architecture](./docs/assets/architecture.webp)
 
 ## 🚀 Getting Started
 
@@ -114,7 +114,7 @@ All transactions include a small service fee to support platform development.
 - **Phase 4:** DAO governance ( Let the Community Decide the direction )
 - **Phase 5:** Token launch ( TGE! )
 
-![SWorm Development Roadmap](./docs/assets/roadmap.png)
+![SWorm Development Roadmap](./docs/assets/roadmap.webp)
 
 *Our phased approach to building a comprehensive cross-chain DeFi yield optimizer*
 
