@@ -16,8 +16,8 @@ interface Contributor {
 }
 
 export default function TVLWaterAnimation() {
-  const [currentTVL, setCurrentTVL] = useState<number>(310997157);
-  const [targetTVL, setTargetTVL] = useState<number>(1000000000);
+  const [currentTVL, setCurrentTVL] = useState<number>(1223000000);
+  const [targetTVL, setTargetTVL] = useState<number>(5000000000);
   const [recentContribution, setRecentContribution] = useState<Contribution | null>(null);
   const [fillPercentage, setFillPercentage] = useState<number>(0);
   const [windowWidth, setWindowWidth] = useState<number>(0);
