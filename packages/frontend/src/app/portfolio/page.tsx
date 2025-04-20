@@ -192,6 +192,12 @@ export default function PortfolioPage() {
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null)
   const [aiInsights, setAiInsights] = useState<AIInsights | null>(null)
   const [quests, setQuests] = useState<Quest[]>([])
+  const [userLevel, setUserLevel] = useState<UserLevel>({
+    level: 3,
+    currentXP: 230,
+    requiredXP: 500,
+    title: 'DeFi Apprentice',
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState<
@@ -221,6 +227,9 @@ export default function PortfolioPage() {
         description: 'Transfer any asset from Ethereum to Sui network',
         reward: '25 XP + 5% APY boost on sUSDC',
         completed: false,
+        xp: 25,
+        difficulty: 'Easy',
+        category: 'DeFi',
       },
       {
         id: 'stake-susd',
@@ -228,6 +237,9 @@ export default function PortfolioPage() {
         description: 'Stake at least 100 sUSDC tokens',
         reward: '30 XP + 0.5% cashback on next swap',
         completed: true,
+        xp: 30,
+        difficulty: 'Easy',
+        category: 'DeFi',
       },
       {
         id: 'lp-contribute',
@@ -236,6 +248,9 @@ export default function PortfolioPage() {
         reward: '50 XP + DeFi Champion NFT',
         completed: false,
         progress: 0.4,
+        xp: 50,
+        difficulty: 'Medium',
+        category: 'DeFi',
       },
       {
         id: 'nft-badge',
@@ -243,6 +258,9 @@ export default function PortfolioPage() {
         description: 'Complete first 3 quests to earn the exclusive NFT',
         reward: '100 XP + Early access to new features',
         completed: false,
+        xp: 100,
+        difficulty: 'Medium',
+        category: 'NFT',
       },
       {
         id: 'defi-quiz',
@@ -250,6 +268,9 @@ export default function PortfolioPage() {
         description: 'Test your DeFi knowledge and learn more',
         reward: '20 XP + Risk protection feature',
         completed: false,
+        xp: 20,
+        difficulty: 'Easy',
+        category: 'DeFi',
       },
       {
         id: 'risk-protection',
@@ -257,9 +278,66 @@ export default function PortfolioPage() {
         description: 'Set up automated safety protocols for your assets',
         reward: '30 XP + Insurance on up to $1000 of assets',
         completed: false,
+        xp: 30,
+        difficulty: 'Easy',
+        category: 'DeFi',
+      },
+      {
+        id: 'trade-volume',
+        title: '💹 Trading Master',
+        description: 'Achieve $1000 in trading volume on Sui DEXes',
+        reward: '120 XP + Limited Trading Badge',
+        completed: false,
+        progress: 0.15,
+        xp: 120,
+        difficulty: 'Hard',
+        category: 'Trading',
+      },
+      {
+        id: 'governance-vote',
+        title: '🗳️ Governance Participation',
+        description: 'Cast your first vote in a Sui ecosystem proposal',
+        reward: '75 XP + Governance Token Airdrop',
+        completed: false,
+        xp: 75,
+        difficulty: 'Medium',
+        category: 'Governance',
       },
     ])
   }, [])
+
+  function getDifficultyColor(difficulty: string): string {
+    switch (difficulty) {
+      case 'Easy':
+        return 'bg-green-900 text-green-200'
+      case 'Medium':
+        return 'bg-yellow-900 text-yellow-200'
+      case 'Hard':
+        return 'bg-orange-900 text-orange-200'
+      case 'Epic':
+        return 'bg-purple-900 text-purple-200'
+      default:
+        return 'bg-blue-900 text-blue-200'
+    }
+  }
+
+  // Function to get category icon
+  function getCategoryIcon(category: string): string {
+    switch (category) {
+      case 'DeFi':
+        return '💰'
+      case 'NFT':
+        return '🖼️'
+      case 'Social':
+        return '👥'
+      case 'Trading':
+        return '📊'
+      case 'Governance':
+        return '🏛️'
+      default:
+        return '🔮'
+    }
+  }
 
   // Enhanced function to get AI insights with DeFi recommendations
   async function getAIInsights(
@@ -1744,58 +1822,194 @@ Format the response as JSON with the following structure:
           )}
           {/* Milestone Quests */}
           <div className="rounded-xl border border-gray-700 bg-gray-800 p-6 shadow">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">🎯 Milestone Quests</h2>
-              <span className="rounded bg-blue-900 px-2.5 py-0.5 text-xs font-medium text-blue-200">
-                {quests.filter((q) => q.completed).length}/{quests.length}{' '}
-                Completed
-              </span>
+            <div className="mb-6">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white shadow-lg">
+                    {userLevel.level}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Adventure Journal</h2>
+                    <div className="text-sm text-gray-400">
+                      {userLevel.title}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="mb-1 text-xs text-gray-400">
+                    XP: {userLevel.currentXP}/{userLevel.requiredXP}
+                  </div>
+                  <div className="h-2 w-32 overflow-hidden rounded-full bg-gray-700">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-600"
+                      style={{
+                        width: `${(userLevel.currentXP / userLevel.requiredXP) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-4 gap-4 text-center">
+                <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">
+                  <div className="font-medium">Completed</div>
+                  <div className="text-xl font-bold text-green-400">
+                    {quests.filter((q) => q.completed).length}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">
+                  <div className="font-medium">In Progress</div>
+                  <div className="text-xl font-bold text-yellow-400">
+                    {
+                      quests.filter(
+                        (q) => !q.completed && q.progress !== undefined
+                      ).length
+                    }
+                  </div>
+                </div>
+                <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">
+                  <div className="font-medium">Available</div>
+                  <div className="text-xl font-bold text-blue-400">
+                    {
+                      quests.filter(
+                        (q) => !q.completed && q.progress === undefined
+                      ).length
+                    }
+                  </div>
+                </div>
+                <div className="rounded-lg border border-gray-700 bg-gray-900 p-2">
+                  <div className="font-medium">Total XP</div>
+                  <div className="text-xl font-bold text-purple-400">
+                    {quests
+                      .filter((q) => q.completed)
+                      .reduce((total, q) => total + q.xp, 0)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-3 flex items-center justify-between border-b border-gray-700 pb-2">
+              <h3 className="text-lg font-medium">Active Quests</h3>
+              <div className="flex space-x-2">
+                <button className="rounded-md bg-gray-700 px-3 py-1 text-xs hover:bg-gray-600">
+                  All
+                </button>
+                <button className="rounded-md bg-gray-900 px-3 py-1 text-xs hover:bg-gray-700">
+                  DeFi
+                </button>
+                <button className="rounded-md bg-gray-900 px-3 py-1 text-xs hover:bg-gray-700">
+                  NFT
+                </button>
+                <button className="rounded-md bg-gray-900 px-3 py-1 text-xs hover:bg-gray-700">
+                  Trading
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {quests.map((quest) => (
                 <div
                   key={quest.id}
-                  className={`rounded-xl border p-4 ${
+                  className={`group relative overflow-hidden rounded-xl border ${
                     quest.completed
-                      ? 'border-green-800 bg-green-900'
-                      : 'border-gray-600 bg-gray-700'
-                  }`}
+                      ? 'border-green-700 bg-gradient-to-br from-green-900/50 to-green-800/30'
+                      : quest.progress !== undefined
+                        ? 'border-yellow-700/50 bg-gradient-to-br from-yellow-900/30 to-gray-800/30'
+                        : 'border-gray-600 bg-gray-700/50'
+                  } p-5 shadow-sm transition-all hover:shadow-md`}
                 >
-                  <div className="flex justify-between">
-                    <h3 className="font-medium">{quest.title}</h3>
-                    {quest.completed && (
-                      <span className="text-lg text-green-300">✓</span>
-                    )}
+                  <div className="absolute -right-5 -top-5 rotate-12 opacity-10">
+                    <div className="text-7xl">
+                      {getCategoryIcon(quest.category)}
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-gray-300">
+
+                  <div className="flex justify-between">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
+                          quest.completed ? 'bg-green-700' : 'bg-gray-600'
+                        }`}
+                      >
+                        {quest.completed ? (
+                          <span className="text-green-200">✓</span>
+                        ) : (
+                          <span>{getCategoryIcon(quest.category)}</span>
+                        )}
+                      </span>
+                      <h3 className="font-medium">{quest.title}</h3>
+                    </div>
+
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-xs font-medium ${getDifficultyColor(quest.difficulty)}`}
+                    >
+                      {quest.difficulty}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 text-sm text-gray-300">
                     {quest.description}
                   </p>
 
                   {quest.progress !== undefined && (
-                    <div className="mt-2">
-                      <div className="h-2 w-full rounded-full bg-gray-600">
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-400">Progress</span>
+                        <span className="font-medium">
+                          {Math.round(quest.progress * 100)}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-600">
                         <div
-                          className="h-2 rounded-full bg-blue-600"
+                          className="h-2 rounded-full bg-blue-500"
                           style={{ width: `${quest.progress * 100}%` }}
                         ></div>
                       </div>
-                      <p className="mt-1 text-xs text-gray-400">
-                        {Math.round(quest.progress * 100)}% complete
-                      </p>
                     </div>
                   )}
 
-                  <div className="mt-2 text-sm font-medium text-indigo-300">
-                    Reward: {quest.reward}
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-center text-sm font-medium text-indigo-300">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        className="mr-1"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                      {quest.xp} XP
+                    </div>
+
+                    <button
+                      className={`rounded-md px-3 py-1 text-xs font-medium ${
+                        quest.completed
+                          ? 'bg-green-700 text-green-100 opacity-50'
+                          : 'bg-blue-600 text-white hover:bg-blue-500'
+                      }`}
+                    >
+                      {quest.completed ? 'Completed' : 'Start Quest'}
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            <button className="mt-6 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 md:w-auto">
-              View All Quests
-            </button>
+            <div className="mt-8 flex justify-between">
+              <button className="rounded-lg border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600">
+                View Past Quests
+              </button>
+
+              <button className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-md hover:from-blue-500 hover:to-purple-500">
+                Find New Adventures
+              </button>
+            </div>
           </div>
         </>
       )}

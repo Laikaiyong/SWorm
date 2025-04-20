@@ -1,8 +1,8 @@
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { STAKING_PACKAGE_ID, STAKING_MODULE_NAME, STAKING_POOL_ID, CLOCK_ID } from './sui-client';
 
 export function prepareStakeTransaction(amount: string) {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
   
   // Create coin to stake
   const [coin] = tx.splitCoins(tx.gas, [tx.pure(amount)]);
@@ -21,7 +21,7 @@ export function prepareStakeTransaction(amount: string) {
 }
 
 export function prepareUnstakeTransaction() {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
   
   // Call the unstake function
   tx.moveCall({
@@ -36,7 +36,7 @@ export function prepareUnstakeTransaction() {
 }
 
 export function prepareClaimRewardsTransaction() {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
   
   // Call the claim_rewards function
   tx.moveCall({
