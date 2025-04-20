@@ -352,7 +352,7 @@ export default function Home(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen w-screen bg-gray-900 text-white">
       {/* Intro Animation */}
       <AnimatePresence>
         {showIntro && (
