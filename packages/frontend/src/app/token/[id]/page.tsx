@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { ArrowUpRight } from 'lucide-react'
-
 import { marked } from 'marked'
+import { useCurrentAccount } from '@mysten/dapp-kit'
+import useStaking from '~~/hooks/useStaking'
 
 // Magic SVG icon for AI section
 const MagicIcon = () => (
@@ -55,6 +56,61 @@ export default function TokenDetailsPage() {
   const [stakingAmount, setStakingAmount] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
   const [tokenAddress, setTokenAddress] = useState(null)
+
+  // Wallet connection check
+  const currentAccount = useCurrentAccount()
+
+  // Use staking hook
+  const {
+    stakeInfo,
+    poolInfo,
+    isLoading: stakingLoading,
+    error: stakingError,
+    stake,
+    unstake,
+    claimRewards,
+  } = useStaking()
+
+  // Handle staking
+  const handleStake = async () => {
+    if (!stakingAmount || parseFloat(stakingAmount) <= 0) return
+
+    try {
+      await stake(stakingAmount)
+      // Reset input after successful stake
+      setStakingAmount('')
+    } catch (error) {
+      console.error('Staking error:', error)
+    }
+  }
+
+  // Handle unstaking
+  const handleUnstake = async () => {
+    try {
+      await unstake()
+    } catch (error) {
+      console.error('Unstaking error:', error)
+    }
+  }
+
+  // Handle claiming rewards
+  const handleClaimRewards = async () => {
+    try {
+      await claimRewards()
+    } catch (error) {
+      console.error('Claiming rewards error:', error)
+    }
+  }
+
+  // Calculate APY (example calculation)
+  const calculateAPY = () => {
+    if (!poolInfo) return '0'
+    // Example: rewardRate * (365 * 24 * 60 * 60) / stakedBalance * 100
+    const annualRewards = poolInfo.rewardRate * (365 * 24 * 60 * 60)
+    if (poolInfo.stakedBalance === 0) return '0'
+    const apy = (annualRewards / poolInfo.stakedBalance) * 100
+    return apy.toFixed(2)
+  }
 
   const handleSuilendSupply = async () => {
     if (!supplyAmount || parseFloat(supplyAmount) <= 0) return
@@ -879,20 +935,109 @@ export default function TokenDetailsPage() {
               {/* Staking Tab */}
               {activeTab === 'staking' && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {/* SuiLend Integration */}
-                    <div className="rounded-lg border border-gray-700 bg-gray-800 shadow-sm">
-                      <div className="border-b border-gray-700 p-4">
-                        <h2 className="text-lg font-semibold">SuiLend</h2>
-                        <p className="text-sm text-gray-400">
-                          Supply and earn interest on your{' '}
-                          {tokenData?.symbol.toUpperCase()}
-                        </p>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {/* SuiLend Integration - Improved UI */}
+                    <div className="rounded-lg border border-blue-700/30 bg-gradient-to-br from-blue-900/10 to-blue-800/20 shadow-sm transition-transform hover:scale-[1.01]">
+                      <div className="border-b border-blue-700/30 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/20">
+                            <svg
+                              width="24"
+                              height="24"
+                              viewBox="0 0 36 36"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M18 36C27.9411 36 36 27.9411 36 18C36 8.05887 27.9411 0 18 0C8.05887 0 0 8.05887 0 18C0 27.9411 8.05887 36 18 36Z"
+                                fill="#6F9BF9"
+                                fillOpacity="0.2"
+                              />
+                              <path
+                                d="M27.15 14.4C27.15 17.4 21.9 18 21.9 18C21.9 18 22.5 14.1 20.1 12.9C17.7 11.7 13.5 13.5 13.5 13.5C13.5 13.5 14.85 9.3 19.35 9.3C23.85 9.3 27.15 11.4 27.15 14.4Z"
+                                fill="#70A1FF"
+                              />
+                              <path
+                                d="M8.85 21.6C8.85 18.6 14.1 18 14.1 18C14.1 18 13.5 21.9 15.9 23.1C18.3 24.3 22.5 22.5 22.5 22.5C22.5 22.5 21.15 26.7 16.65 26.7C12.15 26.7 8.85 24.6 8.85 21.6Z"
+                                fill="#70A1FF"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <h2 className="text-lg font-semibold">SuiLend</h2>
+                            <p className="text-sm text-gray-300">
+                              Supply and earn interest on your{' '}
+                              {tokenData?.symbol.toUpperCase()}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                       <div className="p-4">
                         <div className="space-y-4">
+                          {/* Current Position Card */}
+                          <div className="rounded-lg bg-gradient-to-r from-blue-900/30 to-blue-800/20 p-4">
+                            <h3 className="mb-3 text-sm font-medium text-blue-300">
+                              Your Position
+                            </h3>
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-300">
+                                  Supplied
+                                </span>
+                                <span className="font-medium text-white">
+                                  {parseFloat(suilendBalance).toLocaleString()}{' '}
+                                  {tokenData?.symbol.toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-300">
+                                  Supply APY
+                                </span>
+                                <span className="font-medium text-green-400">
+                                  {suilendApy}%
+                                </span>
+                              </div>
+                              {parseFloat(suilendBalance) > 0 && (
+                                <>
+                                  <div className="border-t border-blue-800/40 pt-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-gray-300">
+                                        Daily Yield
+                                      </span>
+                                      <span className="font-medium text-green-400">
+                                        +
+                                        {(
+                                          (parseFloat(suilendBalance) *
+                                            parseFloat(suilendApy)) /
+                                          100 /
+                                          365
+                                        ).toFixed(6)}{' '}
+                                        {tokenData?.symbol.toUpperCase()}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-gray-300">
+                                        Annual Yield
+                                      </span>
+                                      <span className="font-medium text-green-400">
+                                        +
+                                        {(
+                                          (parseFloat(suilendBalance) *
+                                            parseFloat(suilendApy)) /
+                                          100
+                                        ).toFixed(4)}{' '}
+                                        {tokenData?.symbol.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Amount Input */}
                           <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-300">
+                            <label className="mb-1 block text-sm font-medium text-gray-200">
                               Amount
                             </label>
                             <div className="flex items-center">
@@ -902,11 +1047,11 @@ export default function TokenDetailsPage() {
                                 onChange={(e) =>
                                   setSupplyAmount(e.target.value)
                                 }
-                                className="flex-1 rounded-l-md border border-gray-600 bg-gray-700 p-2 text-white"
+                                className="flex-1 rounded-l-md border border-blue-800/40 bg-blue-900/20 p-2 text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                 placeholder="0.0"
                               />
                               <button
-                                className="rounded-r-md bg-gray-600 px-3 py-2 text-sm hover:bg-gray-500"
+                                className="rounded-r-md bg-blue-700 px-3 py-2 text-sm font-medium hover:bg-blue-600"
                                 onClick={() =>
                                   setSupplyAmount(
                                     tokenData?.market_data?.balance || '0'
@@ -917,7 +1062,9 @@ export default function TokenDetailsPage() {
                               </button>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
+
+                          {/* Action Buttons */}
+                          <div className="grid grid-cols-2 gap-3">
                             <button
                               className={`rounded-md px-4 py-2 text-white ${
                                 isSupplying
@@ -927,14 +1074,21 @@ export default function TokenDetailsPage() {
                               onClick={handleSuilendSupply}
                               disabled={isSupplying || !supplyAmount}
                             >
-                              {isSupplying ? 'Supplying...' : 'Supply'}
+                              {isSupplying ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                                  <span>Supplying</span>
+                                </div>
+                              ) : (
+                                'Supply'
+                              )}
                             </button>
                             <button
                               className={`rounded-md px-4 py-2 text-white ${
                                 isWithdrawing ||
                                 parseFloat(suilendBalance) === 0
                                   ? 'cursor-not-allowed bg-gray-800 text-gray-500'
-                                  : 'bg-gray-600 hover:bg-gray-700'
+                                  : 'bg-gray-700 hover:bg-gray-600'
                               }`}
                               onClick={handleSuilendWithdraw}
                               disabled={
@@ -943,7 +1097,14 @@ export default function TokenDetailsPage() {
                                 !supplyAmount
                               }
                             >
-                              {isWithdrawing ? 'Withdrawing...' : 'Withdraw'}
+                              {isWithdrawing ? (
+                                <div className="flex items-center justify-center gap-2">
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                                  <span>Withdrawing</span>
+                                </div>
+                              ) : (
+                                'Withdraw'
+                              )}
                             </button>
                           </div>
 
@@ -953,145 +1114,586 @@ export default function TokenDetailsPage() {
                             </div>
                           )}
 
-                          <div className="rounded-md bg-gray-700 p-3">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-400">
-                                Supply APY
-                              </span>
-                              <span className="font-medium">{suilendApy}%</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-400">
-                                Supplied
-                              </span>
-                              <span className="font-medium">
-                                {parseFloat(suilendBalance).toLocaleString()}{' '}
-                                {tokenData?.symbol.toUpperCase()}
-                              </span>
-                            </div>
-
-                            {parseFloat(suilendBalance) > 0 && (
-                              <div className="mt-2 border-t border-gray-600 pt-2">
-                                <div className="flex justify-between">
-                                  <span className="text-sm text-gray-400">
-                                    Earned Interest
-                                  </span>
-                                  <span className="font-medium text-green-500">
-                                    +
-                                    {(
-                                      (parseFloat(suilendBalance) *
-                                        parseFloat(suilendApy)) /
-                                      100 /
-                                      365
-                                    ).toFixed(6)}{' '}
-                                    {tokenData?.symbol.toUpperCase()}/day
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-sm text-gray-400">
-                                    Est. Annual Yield
-                                  </span>
-                                  <span className="font-medium text-green-500">
-                                    +
-                                    {(
-                                      (parseFloat(suilendBalance) *
-                                        parseFloat(suilendApy)) /
-                                      100
-                                    ).toFixed(4)}{' '}
-                                    {tokenData?.symbol.toUpperCase()}/year
-                                  </span>
-                                </div>
+                          {/* Info Card */}
+                          <div className="rounded-md border border-blue-800/40 bg-blue-900/20 p-3">
+                            <h4 className="mb-2 text-sm font-medium text-blue-300">
+                              SuiLend Benefits
+                            </h4>
+                            <div className="grid grid-cols-3 gap-2 text-xs text-gray-300">
+                              <div className="flex flex-col items-center rounded-md bg-blue-800/20 p-2 text-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="mb-1 text-blue-400"
+                                >
+                                  <path d="M12 2v6.5l5-3 1.5 2.5-4.5 2.5 4.5 2.5-1.5 2.5-5-3V17l-3 1-2-2 1-3-3-1v-2l3-1-1-3 2-2 3 1z" />
+                                </svg>
+                                <span>Earn Passive Income</span>
                               </div>
-                            )}
-                          </div>
-
-                          {parseFloat(suilendBalance) > 0 && (
-                            <div className="rounded-md border border-blue-800/40 bg-blue-900/20 p-3">
-                              <h4 className="mb-1 text-sm font-medium text-blue-400">
-                                SuiLend Benefits
-                              </h4>
-                              <ul className="space-y-1 text-xs text-gray-300">
-                                <li>• Earn passive income on your assets</li>
-                                <li>• No lock-up period, withdraw anytime</li>
-                                <li>
-                                  • Protected by advanced smart contract
-                                  security
-                                </li>
-                              </ul>
+                              <div className="flex flex-col items-center rounded-md bg-blue-800/20 p-2 text-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="mb-1 text-blue-400"
+                                >
+                                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" />
+                                </svg>
+                                <span>Withdraw Anytime</span>
+                              </div>
+                              <div className="flex flex-col items-center rounded-md bg-blue-800/20 p-2 text-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="mb-1 text-blue-400"
+                                >
+                                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                                </svg>
+                                <span>Smart Contract Security</span>
+                              </div>
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Smart Contract Staking */}
-                    <div className="rounded-lg border border-gray-700 bg-gray-800 shadow-sm">
-                      <div className="border-b border-gray-700 p-4">
-                        <h2 className="text-lg font-semibold">SWORM Staking</h2>
-                        <p className="text-sm text-gray-400">
-                          Stake your {tokenData?.symbol.toUpperCase()} tokens to
-                          earn rewards
-                        </p>
+                    {/* Smart Contract Staking - Improved UI */}
+                    <div className="relative rounded-lg border border-green-700/30 bg-gradient-to-br from-green-900/10 to-green-800/20 shadow-sm transition-transform hover:scale-[1.01]">
+                      {/* Testnet Badge */}
+                      <div className="absolute -top-3 right-4 rounded-full bg-amber-600/90 px-3 py-1 text-xs font-bold text-white shadow-lg">
+                        TESTNET ONLY
                       </div>
-                      <div className="p-4">
-                        <div className="space-y-4">
+
+                      <div className="border-b border-green-700/30 p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600/20">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-green-400"
+                            >
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                          </div>
                           <div>
-                            <label className="mb-1 block text-sm font-medium text-gray-300">
-                              Amount
-                            </label>
-                            <div className="flex items-center">
-                              <input
-                                type="text"
-                                value={stakingAmount}
-                                onChange={(e) =>
-                                  setStakingAmount(e.target.value)
-                                }
-                                className="flex-1 rounded-l-md border border-gray-600 bg-gray-700 p-2 text-white"
-                                placeholder="0.0"
-                              />
-                              <button
-                                className="rounded-r-md bg-gray-600 px-3 py-2 text-sm hover:bg-gray-500"
-                                onClick={() =>
-                                  setStakingAmount(
-                                    tokenData?.market_data?.balance || '0'
-                                  )
-                                }
-                              >
-                                MAX
-                              </button>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                              Stake
-                            </button>
-                            <button className="rounded-md border border-gray-600 px-4 py-2 hover:bg-gray-700">
-                              Unstake
-                            </button>
-                          </div>
-                          <div className="rounded-md bg-gray-700 p-3">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-400">
-                                Staking APR
-                              </span>
-                              <span className="font-medium">12.5%</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-400">
-                                Staked
-                              </span>
-                              <span className="font-medium">
-                                0 {tokenData?.symbol.toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-gray-400">
-                                Rewards
-                              </span>
-                              <span className="font-medium">0 SWORM</span>
-                            </div>
+                            <h2 className="text-lg font-semibold">
+                              SWORM Staking
+                            </h2>
+                            <p className="text-sm text-gray-300">
+                              Stake your SUI tokens to earn rewards
+                            </p>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="p-4">
+                        {!currentAccount ? (
+                          <div className="rounded-lg bg-green-900/20 p-6 text-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="36"
+                              height="36"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mx-auto mb-3 text-green-400"
+                            >
+                              <rect
+                                width="18"
+                                height="11"
+                                x="3"
+                                y="11"
+                                rx="2"
+                                ry="2"
+                              />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            <p className="mb-4 text-gray-300">
+                              Connect your wallet to start staking
+                            </p>
+                          </div>
+                        ) : stakingLoading ? (
+                          <div className="flex h-64 items-center justify-center py-4">
+                            <div className="h-10 w-10 animate-spin rounded-full border-4 border-green-500 border-t-transparent"></div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {/* Testnet Callout */}
+                            <div className="mb-4 rounded-lg border border-amber-600/40 bg-amber-900/20 p-3">
+                              <div className="flex gap-2">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="text-amber-400"
+                                >
+                                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                                  <line x1="12" x2="12" y1="9" y2="13" />
+                                  <line x1="12" x2="12.01" y1="17" y2="17" />
+                                </svg>
+                                <div>
+                                  <p className="text-sm font-medium text-amber-300">
+                                    Testnet Contract
+                                  </p>
+                                  <p className="text-xs text-amber-200/70">
+                                    This staking contract is deployed on Sui
+                                    Testnet. Real SUI tokens are not affected.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Pool Information - Infographic Style */}
+                            <div className="rounded-lg bg-gradient-to-r from-green-900/30 to-green-800/20 p-4">
+                              <h3 className="mb-3 text-sm font-medium text-green-300">
+                                Pool Statistics
+                              </h3>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col rounded-md bg-green-800/20 p-3">
+                                  <span className="text-xs text-gray-400">
+                                    Total Staked
+                                  </span>
+                                  <span className="text-lg font-medium text-white">
+                                    {poolInfo
+                                      ? (poolInfo.stakedBalance / 1e9).toFixed(
+                                          2
+                                        )
+                                      : '0'}{' '}
+                                    SUI
+                                  </span>
+                                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-700">
+                                    <div
+                                      className="h-full rounded-full bg-green-500"
+                                      style={{
+                                        width: `${Math.min(100, (poolInfo?.stakedBalance || 0) / 1e11)}%`,
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col rounded-md bg-green-800/20 p-3">
+                                  <span className="text-xs text-gray-400">
+                                    APY
+                                  </span>
+                                  <span className="text-lg font-medium text-green-400">
+                                    {calculateAPY()}%
+                                  </span>
+                                  <div className="mt-1 flex items-center text-xs text-gray-400">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="15 14 20 9 15 4" />
+                                      <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+                                    </svg>
+                                    <span className="ml-1">Compound daily</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col rounded-md bg-green-800/20 p-3">
+                                  <span className="text-xs text-gray-400">
+                                    Min Duration
+                                  </span>
+                                  <span className="text-lg font-medium text-white">
+                                    {poolInfo
+                                      ? (
+                                          poolInfo.minStakeDuration / 86400
+                                        ).toFixed(0)
+                                      : '0'}{' '}
+                                    days
+                                  </span>
+                                  <div className="mt-1 flex items-center text-xs text-gray-400">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="12" cy="12" r="10" />
+                                      <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    <span className="ml-1">Lock period</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col rounded-md bg-green-800/20 p-3">
+                                  <span className="text-xs text-gray-400">
+                                    Rewards Pool
+                                  </span>
+                                  <span className="text-lg font-medium text-white">
+                                    {poolInfo
+                                      ? (poolInfo.rewardsBalance / 1e9).toFixed(
+                                          2
+                                        )
+                                      : '0'}{' '}
+                                    SUI
+                                  </span>
+                                  <div className="mt-1 flex items-center text-xs text-gray-400">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <circle cx="8" cy="21" r="1" />
+                                      <circle cx="19" cy="21" r="1" />
+                                      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                                    </svg>
+                                    <span className="ml-1">
+                                      Available for distribution
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* User Stake Information */}
+                            {stakeInfo ? (
+                              <div className="rounded-lg bg-gradient-to-r from-blue-900/30 to-green-900/20 p-4">
+                                <h3 className="mb-3 text-sm font-medium text-blue-300">
+                                  Your Stake
+                                </h3>
+
+                                <div className="grid gap-4">
+                                  <div className="flex flex-col items-center rounded-md bg-blue-800/20 p-4">
+                                    <span className="text-sm text-gray-300">
+                                      Staked Amount
+                                    </span>
+                                    <span className="mt-1 text-2xl font-medium text-white">
+                                      {(stakeInfo.amount / 1e9).toFixed(4)} SUI
+                                    </span>
+
+                                    <div className="mt-3 flex w-full justify-between rounded-md bg-blue-900/40 p-2 text-xs">
+                                      <div>
+                                        <span className="text-gray-400">
+                                          Since
+                                        </span>
+                                        <div className="font-medium">
+                                          {new Date(
+                                            stakeInfo.stakeTimestamp * 1000
+                                          ).toLocaleDateString()}
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span className="text-gray-400">
+                                          Est. Rewards
+                                        </span>
+                                        <div className="font-medium text-green-400">
+                                          {(stakeInfo.rewardDebt / 1e9).toFixed(
+                                            6
+                                          )}{' '}
+                                          SUI
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex gap-3">
+                                    <button
+                                      onClick={handleUnstake}
+                                      className="flex-1 rounded-md bg-red-600/90 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                                    >
+                                      <div className="flex items-center justify-center gap-1.5">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+                                          <path d="M20 12v4H6a2 2 0 0 0-2 2c0 1.1.9 2 2 2h12v-4" />
+                                        </svg>
+                                        <span>Unstake</span>
+                                      </div>
+                                    </button>
+                                    <button
+                                      onClick={handleClaimRewards}
+                                      className="flex-1 rounded-md bg-green-600/90 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                    >
+                                      <div className="flex items-center justify-center gap-1.5">
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="16"
+                                          height="16"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <path d="M20 6H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" />
+                                          <path d="M12 16v-6" />
+                                          <path d="M8 13l4 3 4-3" />
+                                        </svg>
+                                        <span>Claim Rewards</span>
+                                      </div>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="rounded-lg bg-gradient-to-r from-blue-900/20 to-blue-800/10 p-4">
+                                <h3 className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-300">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M12 17v.5" />
+                                    <path d="M12 14v-3" />
+                                    <path d="M6.6 15.6A8 8 0 1 1 17.4 15.6" />
+                                  </svg>
+                                  <span>Start Staking</span>
+                                </h3>
+                                <p className="mb-3 text-sm text-gray-400">
+                                  You have no active stakes. Start staking SUI
+                                  to earn rewards.
+                                </p>
+
+                                <div className="rounded-md bg-blue-800/20 p-3 text-xs">
+                                  <ul className="space-y-1.5 text-gray-300">
+                                    <li className="flex items-center gap-1.5">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="text-green-400"
+                                      >
+                                        <polyline points="9 11 12 14 22 4" />
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                                      </svg>
+                                      <span>
+                                        Stake SUI to earn passive rewards
+                                      </span>
+                                    </li>
+                                    <li className="flex items-center gap-1.5">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="text-green-400"
+                                      >
+                                        <polyline points="9 11 12 14 22 4" />
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                                      </svg>
+                                      <span>
+                                        Competitive APY of ~{calculateAPY()}%
+                                      </span>
+                                    </li>
+                                    <li className="flex items-center gap-1.5">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="text-green-400"
+                                      >
+                                        <polyline points="9 11 12 14 22 4" />
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                                      </svg>
+                                      <span>
+                                        Minimum staking period:{' '}
+                                        {poolInfo
+                                          ? (
+                                              poolInfo.minStakeDuration / 86400
+                                            ).toFixed(0)
+                                          : '0'}{' '}
+                                        days
+                                      </span>
+                                    </li>
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Staking Form */}
+                            <div className="rounded-lg bg-gradient-to-r from-green-900/20 to-green-800/10 p-4">
+                              <div className="mb-2">
+                                <label
+                                  htmlFor="stakeAmount"
+                                  className="block text-sm font-medium text-gray-200"
+                                >
+                                  Stake Amount (SUI)
+                                </label>
+                                <div className="mt-1 flex rounded-md shadow-sm">
+                                  <input
+                                    type="number"
+                                    name="stakeAmount"
+                                    id="stakeAmount"
+                                    className="block w-full rounded-md border border-green-800/40 bg-green-900/20 px-3 py-2 text-white focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                                    placeholder="0.0"
+                                    value={stakingAmount}
+                                    onChange={(e) =>
+                                      setStakingAmount(e.target.value)
+                                    }
+                                  />
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={handleStake}
+                                disabled={
+                                  !stakingAmount ||
+                                  parseFloat(stakingAmount) <= 0
+                                }
+                                className="w-full rounded-md bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:bg-gray-600"
+                              >
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M5 9h14M5 15h14M12 19V5" />
+                                  </svg>
+                                  <span>Stake SUI</span>
+                                </div>
+                              </button>
+                            </div>
+
+                            {stakingError && (
+                              <div className="mt-3 rounded-md border border-red-800 bg-red-900/30 p-2 text-sm text-red-400">
+                                {stakingError}
+                              </div>
+                            )}
+
+                            {/* Contract Address */}
+                            <div className="mt-2 flex items-center gap-1.5 px-1 text-xs text-gray-400">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect
+                                  width="20"
+                                  height="14"
+                                  x="2"
+                                  y="5"
+                                  rx="2"
+                                />
+                                <line x1="2" x2="22" y1="10" y2="10" />
+                              </svg>
+                              <span>Contract: 0x053cb94e...772e6</span>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="cursor-pointer text-blue-400 hover:text-blue-300"
+                              >
+                                <rect
+                                  width="14"
+                                  height="14"
+                                  x="8"
+                                  y="8"
+                                  rx="2"
+                                  ry="2"
+                                />
+                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 

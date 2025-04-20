@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import TVLWaterAnimation from './components/tvlWaterAnimation'
+import { marked } from 'marked'
 
 // Define token interface
 interface Token {
@@ -50,6 +51,31 @@ interface BridgeRoute {
   image: string
 }
 
+const MagicIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="lucide lucide-wand"
+  >
+    <path d="M15 4V2" />
+    <path d="M15 16v-2" />
+    <path d="M8 9h2" />
+    <path d="M20 9h2" />
+    <path d="M17.8 11.8 19 13" />
+    <path d="M15 9h0" />
+    <path d="M17.8 6.2 19 5" />
+    <path d="m3 21 9-9" />
+    <path d="M12.2 6.2 11 5" />
+  </svg>
+)
+
 export default function Home(): JSX.Element {
   const [showIntro, setShowIntro] = useState<boolean>(true)
   const [tokens, setTokens] = useState<Token[]>([])
@@ -66,6 +92,155 @@ export default function Home(): JSX.Element {
   const [trendingPools, setTrendingPools] = useState<Pool[]>([])
   const [newPools, setNewPools] = useState<Pool[]>([])
   const [loadingPools, setLoadingPools] = useState<boolean>(true)
+
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState<boolean>(false)
+
+  const generateAIAnalysis = async () => {
+    if (tokens.length === 0 || trendingPools.length === 0) return
+
+    setIsLoadingAnalysis(true)
+    try {
+      // Format token data for the AI
+      const tokenData = tokens.slice(0, 10).map((token) => ({
+        name: token.name,
+        symbol: token.symbol,
+        price: token.current_price,
+        price_change_24h: token.price_change_percentage_24h,
+        market_cap: token.market_cap,
+      }))
+
+      // Format pool data
+      const poolData = trendingPools.slice(0, 5).map((pool) => ({
+        name: pool.attributes.name,
+        liquidity: parseFloat(pool.attributes.reserve_in_usd || '0'),
+        volume_24h: parseFloat(pool.attributes.volume_usd?.h24 || '0'),
+        price_change_24h: parseFloat(
+          pool.attributes.price_change_percentage?.h24 || '0'
+        ),
+      }))
+
+      // Calculate total liquidity and volume
+      const totalLiquidity = poolData.reduce(
+        (sum, pool) => sum + pool.liquidity,
+        0
+      )
+      const totalVolume = poolData.reduce(
+        (sum, pool) => sum + pool.volume_24h,
+        0
+      )
+
+      // Count positive and negative price movements
+      const positiveTokens = tokenData.filter(
+        (t) => t.price_change_24h > 0
+      ).length
+      const marketSentiment =
+        positiveTokens > tokenData.length / 2 ? 'bullish' : 'bearish'
+
+      // Prepare the prompt for Groq
+      const prompt = `
+  Analyze this Sui blockchain ecosystem data and provide detailed market insights:
+  
+  Tokens Data:
+  ${tokenData.map((t) => `${t.symbol}: $${t.price.toFixed(4)}, 24h change: ${t.price_change_24h.toFixed(2)}%, Market Cap: $${(t.market_cap / 1000000).toFixed(2)}M`).join('\n')}
+  
+  Top Liquidity Pools:
+  ${poolData.map((p) => `${p.name}: $${p.liquidity.toLocaleString()} liquidity, $${p.volume_24h.toLocaleString()} 24h volume, ${p.price_change_24h.toFixed(2)}% price change`).join('\n')}
+  
+  Ecosystem Stats:
+  - Total Liquidity: $${totalLiquidity.toLocaleString()}
+  - Total 24h Volume: $${totalVolume.toLocaleString()}
+  - Market Sentiment: ${marketSentiment} (${positiveTokens}/${tokenData.length} tokens positive)
+  
+  Please provide a comprehensive market analysis for the Sui blockchain ecosystem including:
+  1. Overall market summary and key trends
+  2. Token performance analysis 
+  3. Liquidity pool dynamics and opportunities
+  4. Trading recommendations and potential strategies
+  
+  Format your analysis in markdown with clear sections and bullet points. Focus on actionable insights.
+  `
+
+      // Call the Groq API
+      const groqResponse = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_GROQ_API}`,
+          },
+          body: JSON.stringify({
+            model: 'llama3-70b-8192',
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are a cryptocurrency market analyst specializing in the Sui blockchain ecosystem. Provide expert analysis on market trends, token performance, and liquidity pools. Focus on actionable insights and avoid generic advice.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            temperature: 0.2,
+            max_tokens: 1000,
+          }),
+        }
+      )
+
+      if (!groqResponse.ok) {
+        throw new Error(`Groq API error: ${groqResponse.status}`)
+      }
+
+      const groqData = await groqResponse.json()
+      const content = groqData.choices[0].message.content
+
+      // Set the AI analysis content directly
+      setAiAnalysis(content)
+    } catch (error) {
+      console.error('Error generating AI analysis:', error)
+
+      // Fallback analysis if API fails
+      setAiAnalysis(`
+  ## Sui Ecosystem Market Analysis
+  
+  ### Market Overview
+  * The Sui ecosystem is showing ${tokens.filter((t) => (t.price_change_percentage_24h || 0) > 0).length > tokens.length / 2 ? 'positive' : 'negative'} momentum over the past 24 hours
+  * Market sentiment appears ${tokens.filter((t) => (t.price_change_percentage_24h || 0) > 0).length > tokens.length / 2 ? 'bullish' : 'bearish'} based on price action
+  * Total liquidity across top pools: $${trendingPools.reduce((sum, pool) => sum + parseFloat(pool.attributes.reserve_in_usd || '0'), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+  
+  ### Token Highlights
+  * ${tokens[0]?.name} (${tokens[0]?.symbol?.toUpperCase() || 'N/A'}) has shown notable movement at ${tokens[0]?.price_change_percentage_24h?.toFixed(2) || 'N/A'}% in 24h
+  * Most tokens are showing ${tokens.filter((t) => (t.price_change_percentage_24h || 0) > 0).length > tokens.length / 2 ? 'gains' : 'losses'} in the current market cycle
+  * Consider monitoring high market cap tokens for stability in volatile conditions
+  
+  ### Liquidity Pool Analysis
+  * Most active pool: ${trendingPools[0]?.attributes.name || 'N/A'} with $${parseFloat(trendingPools[0]?.attributes.volume_usd?.h24 || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })} 24h volume
+  * Newly created pools may offer early liquidity provision opportunities
+  * Current pool activity suggests ${parseFloat(trendingPools[0]?.attributes.volume_usd?.h24 || '0') > 100000 ? 'strong' : 'moderate'} trader interest
+  
+  ### Trading Recommendations
+  * ${tokens.filter((t) => (t.price_change_percentage_24h || 0) > 0).length > tokens.length / 2 ? 'Consider buying on dips as the market shows overall strength' : 'Exercise caution with new positions due to negative market sentiment'}
+  * Look for tokens with strong fundamentals and consistent pool activity
+  * Monitor new pool creation for potential early entry opportunities
+  `)
+    } finally {
+      setIsLoadingAnalysis(false)
+    }
+  }
+
+  // Call this in useEffect after data is loaded
+  useEffect(() => {
+    if (
+      !loading &&
+      !loadingPools &&
+      tokens.length > 0 &&
+      trendingPools.length > 0
+    ) {
+      generateAIAnalysis()
+    }
+  }, [loading, loadingPools, tokens, trendingPools])
 
   // Add this to your useEffect or create a new one
   useEffect(() => {
@@ -980,9 +1155,152 @@ export default function Home(): JSX.Element {
                   )}
                 </div>
               </div>
-
-              
             </div>
+          </div>
+        </motion.div>
+
+        {/* AI Market Analysis Section */}
+        <motion.div
+          className="mt-12"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: showIntro ? 4.8 : 0.8 }}
+        >
+          <div className="rounded-lg border border-purple-900/40 bg-gradient-to-r from-purple-900/30 to-blue-900/30 p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-2xl font-bold text-transparent">
+                AI Market Analysis
+              </h2>
+              <button
+                onClick={generateAIAnalysis}
+                className="flex items-center space-x-1 rounded-md bg-purple-600/50 px-3 py-1.5 text-sm text-white transition-colors hover:bg-purple-600/70"
+                disabled={isLoadingAnalysis}
+              >
+                <MagicIcon />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-purple-900/30 bg-gray-800/70 p-6">
+              {isLoadingAnalysis ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <svg
+                    className="mb-4 h-8 w-8 animate-spin text-purple-500"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <p className="text-purple-300">Analyzing market data...</p>
+                </div>
+              ) : aiAnalysis ? (
+                <div className="prose prose-invert prose-sm max-w-none">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: marked.parse(aiAnalysis),
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-400">
+                  No analysis available. Click refresh to generate insights.
+                </div>
+              )}
+            </div>
+
+            {/* Key Stats Cards */}
+            {!isLoadingAnalysis && aiAnalysis && (
+              <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="flex h-full flex-col justify-between rounded-lg border border-purple-900/30 bg-gray-800/70 p-4">
+                  <div className="mb-2 text-sm text-purple-300">
+                    Top Performer
+                  </div>
+                  <div className="text-lg font-medium">
+                    {tokens.length > 0 &&
+                      tokens
+                        .sort(
+                          (a, b) =>
+                            (b.price_change_percentage_24h || 0) -
+                            (a.price_change_percentage_24h || 0)
+                        )[0]
+                        ?.symbol?.toUpperCase()}
+                  </div>
+                  <div className="font-bold text-green-400">
+                    {tokens.length > 0 &&
+                      `+${tokens
+                        .sort(
+                          (a, b) =>
+                            (b.price_change_percentage_24h || 0) -
+                            (a.price_change_percentage_24h || 0)
+                        )[0]
+                        ?.price_change_percentage_24h?.toFixed(2)}%`}
+                  </div>
+                </div>
+
+                <div className="flex h-full flex-col justify-between rounded-lg border border-purple-900/30 bg-gray-800/70 p-4">
+                  <div className="mb-2 text-sm text-purple-300">
+                    Highest Volume Pool
+                  </div>
+                  <div className="truncate text-lg font-medium">
+                    {trendingPools.length > 0 &&
+                      trendingPools.sort(
+                        (a, b) =>
+                          parseFloat(b.attributes.volume_usd?.h24 || '0') -
+                          parseFloat(a.attributes.volume_usd?.h24 || '0')
+                      )[0]?.attributes.name}
+                  </div>
+                  <div className="font-bold text-white">
+                    {trendingPools.length > 0 &&
+                      `$${parseFloat(
+                        trendingPools.sort(
+                          (a, b) =>
+                            parseFloat(b.attributes.volume_usd?.h24 || '0') -
+                            parseFloat(a.attributes.volume_usd?.h24 || '0')
+                        )[0]?.attributes.volume_usd?.h24 || '0'
+                      ).toLocaleString()}`}
+                  </div>
+                </div>
+
+                <div className="flex h-full flex-col justify-between rounded-lg border border-purple-900/30 bg-gray-800/70 p-4">
+                  <div className="mb-2 text-sm text-purple-300">
+                    Market Sentiment
+                  </div>
+                  <div className="text-lg font-medium">
+                    {tokens.filter(
+                      (t) => (t.price_change_percentage_24h || 0) > 0
+                    ).length >
+                    tokens.length / 2
+                      ? 'Bullish'
+                      : 'Bearish'}
+                  </div>
+                  <div
+                    className={`font-bold ${
+                      tokens.filter(
+                        (t) => (t.price_change_percentage_24h || 0) > 0
+                      ).length >
+                      tokens.length / 2
+                        ? 'text-green-400'
+                        : 'text-red-400'
+                    }`}
+                  >
+                    {`${Math.round((tokens.filter((t) => (t.price_change_percentage_24h || 0) > 0).length / tokens.length) * 100)}% positive`}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 

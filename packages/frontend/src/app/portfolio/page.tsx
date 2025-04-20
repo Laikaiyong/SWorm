@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useCurrentAccount } from '@mysten/dapp-kit'
 import { Moon, Sun } from 'lucide-react'
+import { marked } from 'marked'
 
 // Type definitions
 interface TokenData {
@@ -158,6 +159,31 @@ interface ObjectsResponse {
   objects: ObjectData[]
   nextCursor?: string
 }
+
+const MagicIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="lucide lucide-wand"
+  >
+    <path d="M15 4V2" />
+    <path d="M15 16v-2" />
+    <path d="M8 9h2" />
+    <path d="M20 9h2" />
+    <path d="M17.8 11.8 19 13" />
+    <path d="M15 9h0" />
+    <path d="M17.8 6.2 19 5" />
+    <path d="m3 21 9-9" />
+    <path d="M12.2 6.2 11 5" />
+  </svg>
+)
 
 export default function PortfolioPage() {
   const account = useCurrentAccount()
@@ -1441,8 +1467,7 @@ Format the response as JSON with the following structure:
                                     alt={coin.coinSymbol}
                                     className="mr-2 h-6 w-6 rounded-full"
                                     onError={(e) => {
-                                      (e.target as HTMLImageElement).src =
-                                        ''
+                                      ;(e.target as HTMLImageElement).src = ''
                                     }}
                                   />
                                 )}
@@ -1597,24 +1622,43 @@ Format the response as JSON with the following structure:
           )}
           {/* AI DeFi Optimization Section */}
           {aiInsights && (
-            <div className="rounded-xl border border-gray-700 bg-gray-800 p-6 shadow">
-              <h2 className="mb-4 text-xl font-semibold">
-                🤖 AI DeFi Optimization
-              </h2>
-              <div className="mb-4">
-                <h3 className="mb-2 font-medium">Portfolio Analysis</h3>
-                <p className="text-gray-300">{aiInsights.summary}</p>
+            <div className="rounded-lg border border-blue-700/30 bg-gradient-to-br from-blue-900/30 to-purple-900/30 shadow-sm">
+              <div className="flex flex-row items-center gap-2 space-y-0 border-b border-blue-700/30 p-4">
+                <div className="rounded-full bg-gradient-to-r from-blue-600 to-purple-600 p-2">
+                  <MagicIcon />
+                </div>
+                <div>
+                  <h2 className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-lg font-semibold text-transparent">
+                    AI Analysis
+                  </h2>
+                  <p className="text-sm text-gray-400">Powered by LLAMA AI</p>
+                </div>
               </div>
-
-              <div className="mb-4">
-                <h3 className="mb-2 font-medium">DeFi Opportunities</h3>
-                <ul className="list-disc space-y-2 pl-5">
-                  {aiInsights.recommendations.map((rec, idx) => (
-                    <li key={idx} className="text-gray-300">
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
+              <div className="p-4">
+                <div className="prose prose-sm prose-invert max-w-none">
+                  {aiInsights ? (
+                    <div
+                      className="whitespace-pre-line"
+                      dangerouslySetInnerHTML={{
+                        __html: marked.parse(
+                          `## Portfolio Analysis
+          ${aiInsights.summary}
+          
+          ## DeFi Opportunities
+          ${aiInsights.recommendations.map((rec: string) => `- ${rec}`).join('\n')}
+          
+          ## Risk Assessment
+          **Level: ${aiInsights.riskAssessment.level}**
+          
+          ${aiInsights.riskAssessment.description}
+          ${aiInsights.rebalancingStrategy ? `\n## Rebalancing Strategy\n${aiInsights.rebalancingStrategy}` : ''}`
+                        ) as string,
+                      }}
+                    />
+                  ) : (
+                    <div className="h-24 w-full animate-pulse rounded bg-gray-700"></div>
+                  )}
+                </div>
               </div>
             </div>
           )}
